@@ -1,14 +1,11 @@
-"""
-Flask Documentation:     https://flask.palletsprojects.com/
-Jinja2 Documentation:    https://jinja.palletsprojects.com/
-Werkzeug Documentation:  https://werkzeug.palletsprojects.com/
-This file creates your application.
-"""
-
 from app import app
 from flask import render_template, request, jsonify, send_file
 import os
+from . import db
 from app.models import Movies
+from app.forms import MovieForm
+from werkzeug.utils import secure_filename
+from flask_wtf.csrf import generate_csrf
 
 ###
 # Routing for your application.
@@ -18,6 +15,45 @@ from app.models import Movies
 def index():
     return jsonify(message="This is the beginning of our API")
 
+@app.route("/api/v1/movies", methods=['POST', 'GET'])
+def movies():
+    if request.method == 'POST':
+        form = MovieForm()  
+        
+        if form.validate_on_submit():
+            title = form.title.data
+            description = form.description.data
+            poster = form.poster.data
+
+            filename = secure_filename(form.poster.data.filename)
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+            poster.save(file_path)
+            poster = file_path
+
+            new_movie = Movies(title=title, description=description, poster=poster)
+            db.session.add(new_movie)
+            db.session.commit()
+
+            return jsonify(message="Movie successfully added", title=title, description=description, poster=poster), 201
+        else:
+            return jsonify(form_errors=form_errors(form)), 400
+    
+    if request.method == 'GET':
+        movies = Movies.query.all()
+        movies_list = []
+        for movie in movies:
+            movies_list.append({
+                'id': movie.id,
+                'title': movie.title,
+                'description': movie.description,
+                'poster': movie.poster
+            })
+        return jsonify(movies=movies_list)
+        
+@app.route('/api/v1/csrf-token', methods=['GET']) 
+def get_csrf(): 
+    return jsonify({'csrf_token': generate_csrf()})      
 
 ###
 # The functions below should be applicable to all Flask apps.

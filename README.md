@@ -1,3 +1,5 @@
+MovieForm not importing with correct name, hence MovieFoorm
+
 # INFO3180 VueJS and Flask Starter
 
 This template should help get you started developing with Vue 3 on the frontend and Flask as an API on the backend.
