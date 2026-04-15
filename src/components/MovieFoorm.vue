@@ -90,7 +90,6 @@ const saveMovie = () => {
       return response.json().then(function (data) {
         if (response.ok) {
           successMessage.value = "Movie added successfully!";
-          // Optionally reset form
           title.value = "";
           description.value = "";
           poster.value = null;
